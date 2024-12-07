@@ -1,0 +1,1 @@
+**[:scroll: ftmeta](https://github.com/periaate/ftmeta)** is a metatemplating language and code generation tool. All of my README's, this one included, are programmatically generated using ftmeta from fragments of md.

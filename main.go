@@ -34,12 +34,22 @@ func FuncMap() template.FuncMap {
 			}
 			return typ.String(s).Replace(sar...)
 		},
-		"Dir":  func(a any) FilePath { return FilePath(a.(string)).Dir() },
-		"Base": func(a any) FilePath { return FilePath(a.(string)).Base() },
-		"Abs":  func(a any) FilePath { return FilePath(a.(string)).Abs().Unwrap() },
-		"Link": func(a any) string { return Link(a.(string)) },
+		"Dir":    func(a any) FilePath { return FilePath(a.(string)).Dir() },
+		"Base":   func(a any) FilePath { return FilePath(a.(string)).Base() },
+		"Abs":    func(a any) FilePath { return FilePath(a.(string)).Abs().Unwrap() },
+		"short":  func(path string) string { return Import(format(path, "short")) },
+		"desc":   func(path string) string { return Import(format(path, "desc")) },
+		"link":   func(path string) string { return Link(format(path, "any")) },
+		"import": func(path, part string) string { return Import(format(path, part)) },
+		"module": func(path string) string { return Fragment(format(path, "any")).Module() },
 	}
 }
+
+func (f Fragment) Desc() string {
+	return f.Import(fsio.Join(string(fsio.FilePath(f).Dir()), "desc"))
+}
+
+func format(path, part string) string { return fmt.Sprintf("C:/github.com/periaate/%s/%s", path, part) }
 
 var readDir = lazy.Monadic(fsio.ReadsDir[string])
 
@@ -52,7 +62,7 @@ func ReadFrags(dir string) gen.Array[Fragment] {
 }
 
 func main() {
-	r := Import("./README")
+	r := Import(fsio.QArgs(T.Len[string](T.AtLeast(1))).Unwrap().GetShift().Unwrap().String())
 	yap.Debug("rendering fragment", "README")
 	fmt.Print(r)
 }
@@ -93,10 +103,7 @@ func Import(path string) (res string) {
 	yap.Debug("importing fragment", "path", path)
 	switch {
 	case gen.HasPrefix("github.com")(path):
-		path = FilePath("C:/" + path).Abs().Unwrap().String()
-	case gen.HasPrefix(".")(path):
-	default:
-		path = "./" + path
+		path = FilePath("C:/" + path).Abs().Unwrap().Clean().String()
 	}
 
 	fragName := FilePath(path).Base()
@@ -111,21 +118,8 @@ func Import(path string) (res string) {
 }
 
 func Link(path string) (res string) {
-	yap.Debug("importing fragment", "path", path)
-	switch {
-	case gen.HasPrefix("github.com")(path):
-		path = FilePath("C:/" + path).Abs().Unwrap().String()
-	case gen.HasPrefix(".")(path):
-	default:
-		path = "./" + path
-	}
+	frag := Fragment(path)
 
-	fragName := FilePath(path).Base()
-	yap.Debug("importing fragment", "path", path, "fragment", fragName)
-
-	frags := ReadFrags(FilePath(path).Dir().String())
-	frag := frags.First(gen.Contains(Fragment(fragName))).Unwrap()
-	yap.Debug("importing", "found fragments", frags.Array(), "matched", frag)
 	return fmt.Sprintf("[%s](%s)", frag.Module(), frag.URL())
 }
 
