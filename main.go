@@ -68,11 +68,11 @@ func (f Fragment) Module(a ...string) string {
 	abs := fp.Abs().Unwrap()
 	dir := abs.Dir()
 	base := dir.Base()
-	yap.Info("getting module", "templating", f)
-	yap.Info("abs", abs)
-	yap.Info("dir", dir)
-	yap.Info("base", base)
-	yap.Info("string", base.String())
+	yap.Debug("getting module", "templating", f)
+	yap.Debug("abs", abs)
+	yap.Debug("dir", dir)
+	yap.Debug("base", base)
+	yap.Debug("string", base.String())
 	return base.String()
 }
 
@@ -83,7 +83,7 @@ func (f Fragment) Name() string {
 func (f Fragment) String() string { return string(f) }
 
 func (f Fragment) Template(w io.Writer) {
-	yap.Info("templating", "template path", f)
+	yap.Debug("templating", "template path", f)
 	raw := string(fsio.Read(f).Unwrap())
 	tmpl := gen.Must(template.New(string(f)).Funcs(FuncMap()).Parse(raw))
 	yap.ErrFatal(tmpl.Execute(w, f), "could not execute template")
@@ -112,7 +112,6 @@ func Import(path string) (res string) {
 
 func Link(path string) (res string) {
 	yap.Debug("importing fragment", "path", path)
-	fmt.Println(path)
 	switch {
 	case gen.HasPrefix("github.com")(path):
 		path = FilePath("C:/" + path).Abs().Unwrap().String()
